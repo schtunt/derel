@@ -1,3 +1,8 @@
+# Local
+.setup
+.setup.Darwin
+.pip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
