@@ -17,9 +17,8 @@ all: setup .venv .derelhose
 plot: runs
 	@echo "Visit http://127.0.0.1:6006/ and place Ctrl-C to quit"
 	tensorboard --logdir runs
-
-runs:
-	$(MAKE) plot
+.PHONY: plot
+runs: @plot
 
 repl: ${VENV}
 	source ${VENV}/bin/activate && ipython3
@@ -45,7 +44,11 @@ setup: .setup .pip
 	python3 -m pip install --user --upgrade pip setuptools wheel
 	touch $@
 
-purge:
+clean:
+	rm -rf runs
+.PHONY: clean
+
+purge: clean
 	rm -rf .setup .setup.Darwin
 	rm -rf .derelhose
 	rm -rf ${VENV}
