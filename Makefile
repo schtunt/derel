@@ -5,7 +5,7 @@ PACKAGES += torch torchvision pytorch-ignite
 PACKAGES += tensorboard tensorboardX tensorflow ptan
 PACKAGES += ffmpeg ipython pyreadline matplotlib
 
-OS := $(shell uname -o)
+OS := $(shell uname -s)
 VENV := .venv
 
 all: setup .venv .derelhose
