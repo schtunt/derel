@@ -8,8 +8,11 @@ PACKAGES += ffmpeg ipython pyreadline matplotlib
 OS := $(shell uname -o)
 VENV := .venv
 
-all: setup .venv
+all: setup .venv .derelhose
 .PHONY: all
+
+.derelhose:
+	git pull --recurse-submodules=on-demand
 
 plot: runs
 	@echo "Visit http://127.0.0.1:6006/ and place Ctrl-C to quit"
@@ -44,6 +47,7 @@ setup: .setup .pip
 
 purge:
 	rm -rf .setup .setup.Darwin
+	rm -rf .derelhose
 	rm -rf ${VENV}
 .PHONY: purge
 
