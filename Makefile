@@ -4,6 +4,7 @@ PACKAGES := atari-py gym numpy opencv-python
 PACKAGES += torch torchvision pytorch-ignite
 PACKAGES += tensorboard tensorboardX tensorflow ptan
 PACKAGES += ffmpeg ipython pyreadline matplotlib
+PACKAGES += scikit-learn
 
 OS := $(shell uname -s)
 VENV := .venv
