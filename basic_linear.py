@@ -28,7 +28,7 @@ def function2_samples(number):
     sample = torch.randn(1,1,number,2)
     result = torch.zeros(1,1,number,1)
     for n in range(number):
-        result[0][0][n][0] = sample[0][0][n][0] + sample[0][0][n][1]
+        result[0][0][n][0] = 2*sample[0][0][n][0] + sample[0][0][n][1]
     return sample.float(),result.float()
 """
 REMOVED AND ADDED TO CLASS
@@ -49,9 +49,9 @@ as a class. As such, I've recreated the NN as a class called Net
 
 class Net(nn.Module):
 
-    def __init__(self):
+    def __init__(self,hidden=()):
         super(Net, self).__init__()
-        self.linear = nn.Linear(2,1) #change tupple to create different archit..
+        self.linear = nn.Linear(2,*hidden,1) #change tupple to create different archit..
 
     def forward(self,x):
         return self.linear(x)
