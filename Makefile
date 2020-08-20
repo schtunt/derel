@@ -55,5 +55,5 @@ purge: clean
 	rm -rf ${VENV}
 .PHONY: purge
 
-@%: ${VENV}
+@% @demos/%: ${VENV}
 	source ${VENV}/bin/activate && python3 ${@:@%=%.py}
