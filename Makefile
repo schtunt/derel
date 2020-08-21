@@ -1,10 +1,11 @@
 export PATH += :${HOME}/Library/Python/3.8/bin/
 
-PACKAGES := atari-py gym numpy opencv-python
+PACKAGES := atari-py gym numpy matplotlib
 PACKAGES += torch torchvision pytorch-ignite
 PACKAGES += tensorboard tensorboardX tensorflow ptan
-PACKAGES += ffmpeg ipython pyreadline matplotlib
-PACKAGES += scikit-learn
+PACKAGES += scikit-learn opencv-python
+PACKAGES += ffmpeg
+PACKAGES += ipython pyreadline pdbpp fancycompleter
 
 OS := $(shell uname -s)
 VENV := .venv
@@ -21,6 +22,7 @@ plot: runs
 .PHONY: plot
 runs: @plot
 
+repl: PYTHONSTARTUP := .ipythonrc
 repl: ${VENV}
 	source ${VENV}/bin/activate && ipython3
 .PHONY: repl
