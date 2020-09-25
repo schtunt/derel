@@ -2,6 +2,7 @@
 .setup
 .setup.Darwin
 .pip
+.derelhose
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
