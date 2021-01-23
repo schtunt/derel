@@ -2,6 +2,7 @@
 .setup
 .setup.Darwin
 .pip
+.derelhose
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -132,3 +133,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# MAC OSX
+.DS_Store

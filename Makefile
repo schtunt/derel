@@ -1,6 +1,6 @@
 export PATH += :${HOME}/Library/Python/3.8/bin/
 
-PACKAGES := atari-py gym numpy matplotlib
+PACKAGES := atari-py gym numpy matplotlib pygame
 PACKAGES += torch torchvision pytorch-ignite
 PACKAGES += tensorboard tensorboardX tensorflow ptan
 PACKAGES += scikit-learn opencv-python
