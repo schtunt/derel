@@ -107,12 +107,7 @@ class StockFIFO:
 
     @property
     def average(self):
-        if self.value and self.qty:
-            return self.value / self.qty
-        elif self.value + self.qty == 0:
-            return 0
-        else:
-            raise SystemError()
+        return self.value / self.qty if self.value and self.qty else 0
 
     def __init__(self, symbol):
         self.symbol = symbol
@@ -129,8 +124,9 @@ class StockFIFO:
             mulla(self.average),
         )
 
-    @property
-    def summary(self):
+    def summarize(self):
+        print('#' * 80)
+
         sfmt = lambda qty, lot: '%10.5f %s' % (qty, lot)
         for lot in self.fifo:
             if lot.side == 'buy': continue
@@ -155,6 +151,7 @@ class StockFIFO:
         print("Equity: %10.5f x %s = %s" % (
             self.qty, mulla(self.average), mulla(self.value)
         ))
+        print()
 
     def push(self, qty, price, side, timestamp):
         self.fifo.append(
@@ -189,12 +186,17 @@ class Account:
                     qty, price, side, timestamp
                 )
 
+    def tickers(self):
+        for ticker, stock in self.portfolio.items():
+            yield ticker, stock
+
 def main():
     locale.setlocale(locale.LC_ALL, '')
 
     account = Account()
-    account.slurp('tsla.csv')
-    account['TSLA'].summary
+    account.slurp('rh.csv')
+    for ticker, stock in account.tickers():
+        stock.summarize()
 
 if __name__ == '__main__':
     main()
