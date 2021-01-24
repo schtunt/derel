@@ -45,7 +45,7 @@ class Lot:
     def __repr__(self):
         string = '#%05d %s:%-4s %8.2f x %10s = %10s @ %s' % (
             self.ident,
-            self.ticker.symbol,
+            self.ticker,
             self.side,
             self.qty,
             mulla(self.price),
@@ -72,20 +72,17 @@ class Lot:
         '''
         return self.qty - sum([conn.qty for conn in self.ties])
 
-    @property
-    def symbol(self):
-        return self.ticker.symbol
-
 class LotConnector:
     @classmethod
-    def settle(self, fifo, index):
+    def settle(self, stock):
+        index = stock.pointer
+        fifo = stock.fifo
         sold = fifo[-1]
         assert sold.side == 'sell'
 
-        l = None
         qty = sold.qty
         while qty > ZERO:
-            l = LotConnector(sold, fifo, index)
+            l = LotConnector(sold, stock, index)
             qty -= l.qty
 
             while index < len(fifo) and (
@@ -93,9 +90,22 @@ class LotConnector:
             ):
                 index += 1
 
-        return index
+        stock.pointer = index
 
-    def __init__(self, sold, fifo, index):
+    def __init__(self, sold, stock, index):
+        fifo = stock.fifo
+
+        if len(fifo) == index:
+            fifo.append(
+                Lot(
+                    stock,
+                    'buy',
+                    sold.unsettled,
+                    0.00,
+                    dtp.parse("1st Jan 2020, 12:00:00 am"),
+                )
+            )
+
         self.sold, self.bought = sold, fifo[index]
         self.qty = min((self.sold.unsettled, self.bought.unsettled))
         self.sold.tie(self)
@@ -126,8 +136,8 @@ class StockFIFO:
     def average(self):
         return self.value / self.qty if self.value and self.qty else 0
 
-    def __init__(self, symbol):
-        self.symbol = symbol
+    def __init__(self, ticker):
+        self.ticker = ticker
         self.pointer = 0
         self.fifo = []
 
@@ -136,10 +146,24 @@ class StockFIFO:
 
     def __repr__(self):
         return '<StockFIFO:%-5s x %8.2f @ %s>' % (
-            self.symbol,
+            self.ticker,
             self.qty,
             mulla(self.average),
         )
+
+    def push(self, qty, price, side, timestamp):
+        self.fifo.append(
+            Lot(
+                self,
+                side,
+                flt(qty),
+                price,
+                dtp.parse(timestamp),
+            )
+        )
+
+        if side == 'sell':
+            LotConnector.settle(self)
 
     def summarize(self, fetch=False):
         print('#' * 80)
@@ -169,7 +193,7 @@ class StockFIFO:
             self.qty, mulla(self.average), mulla(self.value)
         ))
         if fetch and self.qty > ZERO:
-            data = marketstack(self.symbol)
+            data = marketstack(self.ticker)
             if data:
                 price = flt(data['eod'][0]['close'])
                 equity = self.qty * price
@@ -182,36 +206,23 @@ class StockFIFO:
 
         print()
 
-    def push(self, qty, price, side, timestamp):
-        self.fifo.append(
-            Lot(
-                self,
-                side,
-                flt(qty),
-                price,
-                dtp.parse(timestamp),
-            )
-        )
-
-        if side == 'sell':
-            self.pointer = LotConnector.settle(self.fifo, self.pointer)
 
 class Account:
     def __init__(self):
         self.portfolio = {}
 
-    def __getitem__(self, symbol):
-        if symbol not in self.portfolio:
-            self.portfolio[symbol] = StockFIFO(symbol)
+    def __getitem__(self, ticker):
+        if ticker not in self.portfolio:
+            self.portfolio[ticker] = StockFIFO(ticker)
 
-        return self.portfolio[symbol]
+        return self.portfolio[ticker]
 
     def slurp(self, csvfile):
         with open(csvfile, newline='') as fh:
             transactions = csv.reader(fh, delimiter=',', quotechar='"')
             header = next(transactions)
-            for price, timestamp, fees, qty, side, name, symbol, otype in transactions:
-                self[symbol].push(
+            for price, timestamp, fees, qty, side, name, ticker, otype in transactions:
+                self[ticker].push(
                     qty, price, side, timestamp
                 )
 
