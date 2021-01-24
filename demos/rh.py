@@ -1,15 +1,32 @@
 #!/usr/bin/env python3
 
-import csv
-from collections import defaultdict, namedtuple
+import os, sys, locale
+import csv, requests
+
 import numpy as np
-from datetime import datetime, timedelta
 import dateutil.parser as dtp
-import locale
+
+from collections import defaultdict, namedtuple
+from datetime import datetime, timedelta
 
 mulla = lambda amount: locale.currency(amount, grouping=True)
 flt = np.single
 ZERO = 1e-5
+
+API_MARKETSTACK = { 'access_key': os.environ['API_MARKETSTACK_KEY'], }
+DB_MARKETSTACK = {}
+def marketstack(ticker):
+    global DB_MARKETSTACK
+
+    if ticker not in DB_MARKETSTACK:
+        api_result = requests.get(
+            'http://api.marketstack.com/v1/tickers/%s/eod?limit=1' % ticker,
+            API_MARKETSTACK
+        )
+        api_response = api_result.json()
+        DB_MARKETSTACK[ticker] = api_response['data']
+
+    return DB_MARKETSTACK[ticker]
 
 class Lot:
     ident = 0
@@ -124,7 +141,7 @@ class StockFIFO:
             mulla(self.average),
         )
 
-    def summarize(self):
+    def summarize(self, fetch=False):
         print('#' * 80)
 
         sfmt = lambda qty, lot: '%10.5f %s' % (qty, lot)
@@ -148,9 +165,21 @@ class StockFIFO:
         for lot in self.fifo[self.pointer:]:
             print(sfmt(lot.qty, lot))
 
-        print("Equity: %10.5f x %s = %s" % (
+        print("Cost : %10.5f x %s = %s" % (
             self.qty, mulla(self.average), mulla(self.value)
         ))
+        if fetch and self.qty > ZERO:
+            data = marketstack(self.symbol)
+            if data:
+                price = flt(data['eod'][0]['close'])
+                equity = self.qty * price
+                print("Value: %10.5f x %s = %s" % (
+                    self.qty, mulla(price), mulla(equity)
+                ))
+                print("Position: %s" % (
+                    mulla(equity - self.value)
+                ))
+
         print()
 
     def push(self, qty, price, side, timestamp):
@@ -195,8 +224,15 @@ def main():
 
     account = Account()
     account.slurp('rh.csv')
-    for ticker, stock in account.tickers():
-        stock.summarize()
+
+    if len(sys.argv) > 1:
+        tickers = sys.argv[1].split(',')
+        for ticker in tickers:
+            stock = account[ticker]
+            stock.summarize(fetch=True)
+    else:
+        for ticker, stock in account.tickers():
+            stock.summarize()
 
 if __name__ == '__main__':
     main()

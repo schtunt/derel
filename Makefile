@@ -58,4 +58,4 @@ purge: clean
 .PHONY: purge
 
 @% @demos/%: ${VENV}
-	source ${VENV}/bin/activate && python3 ${@:@%=%.py}
+	source ${VENV}/bin/activate && python3 ${@:@%=%.py} ${TICKERS}
